@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     config = {
         'mcr': 18,
-        'n_samples': 100,
+        'n_samples': 1,
         'inefficiency': 1.0,
         'rGene': 20,
         'SpotReg': 0.1, #regularization parameter, default 0.1
