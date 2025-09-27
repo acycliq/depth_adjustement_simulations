@@ -63,7 +63,10 @@ def app(cfg):
         classes = scRNAseq.columns.tolist()
         cm += confusion_matrix(classes, out)
 
-    fig = plot_confusion_matrix(cm/num_iter, scRNAseq.columns.values, opts_3D)
+    # Combine config and opts_3D for complete settings display
+    # opts_3D from the last iteration represents the final parameters used
+    all_settings = {**cfg, **opts_3D}
+    fig = plot_confusion_matrix(cm/num_iter, scRNAseq.columns.values, all_settings)
     fig.show(renderer="browser")
 
     return fig
@@ -80,9 +83,9 @@ if __name__ == '__main__':
         'n_samples': 1,
         'inefficiency': 1.0,
         'rGene': 20,
-        'SpotReg': 0.1, #regularization parameter, default 0.1
-        'rSpot': 4,   # negative binomial spread, default 2
-        'spacing_factor': 5,
+        'SpotReg': 0.01, #regularization parameter, default 0.1
+        'rSpot': 2,   # negative binomial spread, default 2
+        'spacing_factor': 2,
         'rng': rng,
     }
     app(config)

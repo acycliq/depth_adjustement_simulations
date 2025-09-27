@@ -38,16 +38,16 @@ def plot_confusion_matrix(cm, keys, opts_3D):
         yaxis=dict(showgrid=True, gridwidth=5, gridcolor="lightgray"),
         autosize=False,
         width=1000,
-        height=1100,
-        margin=dict(t=80, b=350, l=50, r=50),
+        height=1400,
+        margin=dict(t=80, b=500, l=50, r=50),
         annotations=[
             dict(
                 text=f"<b>Settings:</b><br>{settings_text}",
                 showarrow=False,
                 xref="paper", yref="paper",
-                x=0.5, y=-0.25,
+                x=0.5, y=-0.15,
                 xanchor='center', yanchor='top',
-                font=dict(size=10)
+                font=dict(size=11)
             )
         ]
     )
