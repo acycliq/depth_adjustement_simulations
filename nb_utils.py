@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def simulate_nb_matrices(expression_matrix, rng, r=2, inefficiency=0.05, rGene=20, num_simulations=1):
+def simulate_nb_matrices(expression_matrix, cfg):
     """
     Generate simulated gene count matrices assuming a negative binomial model.
 
@@ -15,7 +15,11 @@ def simulate_nb_matrices(expression_matrix, rng, r=2, inefficiency=0.05, rGene=2
     Returns:
     - A list of pandas DataFrames, each with the same shape and labels as the input.
     """
-    simulated_matrices = []
+    r = cfg['mcr']
+    num_samples = cfg['n_samples']
+    rng = cfg['rng']
+    inefficiency = cfg['inefficiency']
+    rGene = cfg['rGene']
 
     # Convert the DataFrame values to a NumPy array for vectorized operations.
     mu_values = expression_matrix.values.astype(float)
@@ -24,7 +28,8 @@ def simulate_nb_matrices(expression_matrix, rng, r=2, inefficiency=0.05, rGene=2
     p_values = r / (r + mu_values)
 
     nG = mu_values.shape[0]  # Number of genes
-    for i in range(num_simulations):
+    simulated_matrices = []
+    for i in range(num_samples):
         # Generate simulated counts for each element.
         # np.random.negative_binomial can work with array inputs for p.
         sim_counts = rng.negative_binomial(r, p_values)

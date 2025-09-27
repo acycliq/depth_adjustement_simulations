@@ -1,58 +1,90 @@
 import os
 import pandas as pd
 import numpy as np
+from scipy.sparse import coo_matrix
 
+import pciSeq
 from nb_utils import simulate_nb_matrices
+from stage import stage_data
+from plotting import confusion_matrix, plot_confusion_matrix
 
-def app():
+def app(cfg):
+
     # Get the Zeisel single cell data
     scRNAseq = pd.read_csv(os.path.join('data', 'l5_all_scRNAseq.csv'))
     scRNAseq = scRNAseq.set_index('Unnamed: 0')
 
-    rng = np.random.default_rng(42)  # seed is set here
-
     # 2. simulate single cell data
-    sim_dfs = simulate_nb_matrices(scRNAseq, rng, r=2.0, inefficiency=1.0, rGene=20)
-    sim_df = sim_dfs[0]
+    sim_scRNAseq = simulate_nb_matrices(scRNAseq, cfg)
+
+    # set the confusion matrix
+    cm = np.zeros([scRNAseq.shape[1], scRNAseq.shape[1]])
 
     #3 loop over the sampled single cell data and generate random spots
-    for i in range(len(sim_dfs)):
-        # generate random spots from the i-th simulated single cell data
-        zc, yc, xc = [0, 0, 0]
-        r = 9
-        df = sim_dfs[i]
-        df = df[['ABC', 'ACTE1']]
-        n_cols = df.shape[1]
-        n_rows = df.shape[0]
+    num_iter = len(sim_scRNAseq)
+    for i in range(num_iter):
+        scRNAseq = sim_scRNAseq[i]
+        pc, img3d = stage_data(scRNAseq, cfg)
+        spots = pc[['x', 'y', 'z', 'gene']]
+        spots = spots.assign(score = 1)
+        spots = spots.assign(intensity = 1)
+        spots = spots.rename(columns={'z': 'z_plane',
+                                      'gene': 'gene_name'})
 
-        genes = df.index.tolist(),
-        genes = np.tile(genes,[1, n_cols])
 
-        actual_class = df.columns.tolist()
-        actual_class = np.tile(actual_class, [n_rows,1]).ravel(order='F')
+        coo = [coo_matrix(d) for d in img3d]
+        opts_3D = {
+            'save_data': False,
+            'launch_diagnostics': False,
+            'launch_viewer': False,
+            'Inefficiency': cfg['inefficiency'],
+            'rGene': cfg['rGene'],
+            'SpotReg': cfg['SpotReg'],
+            'rSpot': cfg['rSpot'],
+            'MisreadDensity': 1e-20,
+            'nNeighbors': 6,
+            'InsideCellBonus':0,
+            'CellCallTolerance': 0.05,
+            'voxel_size':[1,1,1]
+        }
+        pciSeq.setup_logger()
+        cellData, geneData = pciSeq.fit(spots=spots, coo=coo, scRNAseq=scRNAseq, opts=opts_3D)
 
-        labels = df.columns.tolist()
-        labels = np.tile(labels, [n_rows,1]).ravel(order='F')
+        mapping = dict(pc[['label','class']].drop_duplicates().values)
+        cellData = cellData.assign(actual_class = cellData.Cell_Num.map(lambda d: mapping[d]))
+        out = pd.DataFrame({
+            'cell_label': cellData.Cell_Num.tolist(),
+            'Estimated_class':  cellData.ClassName.values.tolist(),
+            'Actual_class': cellData.actual_class.values.tolist(),
+            'Prob': cellData.Prob.values.tolist(),
+        })
+        out['Actual==Best_class'] = out.Estimated_class == out.Actual_class
 
-        gene_counts = df.values.ravel(order='F')
-        genes = np.repeat(genes, gene_counts)
-        actual_class = np.repeat(actual_class, gene_counts)
-        labels = np.repeat(labels, gene_counts)
+        classes = scRNAseq.columns.tolist()
+        cm += confusion_matrix(classes, out)
 
-        counts = gene_counts.sum()
+    fig = plot_confusion_matrix(cm/num_iter, scRNAseq.columns.values, opts_3D)
+    fig.show(renderer="browser")
 
-        points = rng.normal(loc=[zc, yc, xc], scale=r, size=(counts, 3))
-
-        out = np.column_stack((genes, points, labels, actual_class))
-        out = pd.DataFrame(out, columns=['gene', 'x', 'y', 'z', 'label', 'class'])
-        out = out.sort_values(by=['label', 'gene']).reset_index(drop=True)
-        print('done')
+    return fig
 
 
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    app()
+    rng = np.random.default_rng(42)  # seed is set here
+
+    config = {
+        'mcr': 18,
+        'n_samples': 100,
+        'inefficiency': 1.0,
+        'rGene': 20,
+        'SpotReg': 0.1, #regularization parameter, default 0.1
+        'rSpot': 4,   # negative binomial spread, default 2
+        'spacing_factor': 5,
+        'rng': rng,
+    }
+    app(config)
 
 
