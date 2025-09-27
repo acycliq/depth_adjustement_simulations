@@ -33,13 +33,13 @@ def plot_confusion_matrix(cm, keys, opts_3D):
     )
     fig.update_layout(
         title='Confusion Matrix',
-        xaxis_tickangle=45,
-        xaxis=dict(showgrid=True, gridwidth=5, gridcolor="lightgray"),
-        yaxis=dict(showgrid=True, gridwidth=5, gridcolor="lightgray"),
+        xaxis_tickangle=-90,
+        xaxis=dict(showgrid=True, gridwidth=5, gridcolor="lightgray", dtick=1, tickfont=dict(size=11)),
+        yaxis=dict(showgrid=True, gridwidth=5, gridcolor="lightgray", dtick=1, tickfont=dict(size=11)),
         autosize=False,
         width=1000,
         height=1400,
-        margin=dict(t=80, b=500, l=50, r=50),
+        margin=dict(t=80, b=600, l=100, r=50),
         annotations=[
             dict(
                 text=f"<b>Settings:</b><br>{settings_text}",

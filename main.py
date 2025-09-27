@@ -79,8 +79,8 @@ if __name__ == '__main__':
     rng = np.random.default_rng(42)  # seed is set here
 
     config = {
-        'mcr': 18,
         'n_samples': 1,
+        'mcr': 18,
         'inefficiency': 1.0,
         'rGene': 20,
         'SpotReg': 0.01, #regularization parameter, default 0.1
