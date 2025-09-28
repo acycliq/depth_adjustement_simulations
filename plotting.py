@@ -31,8 +31,12 @@ def plot_confusion_matrix(cm, keys, opts_3D):
         hovertemplate="Actual: %{y}<br>Predicted: %{x}<br>Prob: %{z:.3f}<extra></extra>",
         colorbar=dict(len=0.5, y=0.5)  # Adjust the color bar height and position
     )
+    # Calculate the sum of the diagonal (correct classifications)
+    diagonal_sum = np.trace(cm)
+    diagonal_avg = diagonal_sum / cm.shape[0]
+
     fig.update_layout(
-        title='Confusion Matrix',
+        title=f'Confusion Matrix (Diagonal Sum: {diagonal_sum:.3f}, Avg: {diagonal_avg:.3f})',
         xaxis_tickangle=-90,
         xaxis=dict(showgrid=True, gridwidth=5, gridcolor="lightgray", dtick=1, tickfont=dict(size=11)),
         yaxis=dict(showgrid=True, gridwidth=5, gridcolor="lightgray", dtick=1, tickfont=dict(size=11)),

@@ -71,7 +71,8 @@ def app(cfg):
     #3 loop over the sampled single cell data and generate random spots
     num_iter = len(sim_scRNAseq)
     for i in range(num_iter):
-        out, cm, opts_3D = main_loop(sim_scRNAseq[i], cfg)
+        out, cm_temp, opts_3D = main_loop(sim_scRNAseq[i], cfg)
+        cm = cm + cm_temp
 
     # Combine config and opts_3D for complete settings display
     # opts_3D from the last iteration represents the final parameters used
@@ -88,7 +89,7 @@ if __name__ == '__main__':
     rng = np.random.default_rng(42)  # seed is set here
 
     config = {
-        'n_samples': 1,
+        'n_samples': 1000,
         'mcr': 18,
         'inefficiency': 1.0,
         'rGene': 20,
