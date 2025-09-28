@@ -95,7 +95,7 @@ if __name__ == '__main__':
         'rGene': 20,
         'SpotReg': 0.01, #regularization parameter, default 0.1
         'rSpot': 5,   # negative binomial spread, default 2
-        'spacing_factor': 2,
+        'spacing_factor': 2, # regulates how close the pointclouds are to each other. If 2 then they are 2xCellRadius apart.
         'rng': rng,
     }
     app(config)
