@@ -12,8 +12,8 @@ from plotting import confusion_matrix, plot_confusion_matrix
 def main_loop(scRNAseq_temp, cfg):
 
     # Randomly shuffle the columns of the simulated data
-    shuffled_columns = cfg['rng'].permutation(scRNAseq_temp.columns)
-    scRNAseq_temp = scRNAseq_temp[shuffled_columns]
+    shuffled_indices = cfg['rng'].permutation(len(scRNAseq_temp.columns))
+    scRNAseq_temp = scRNAseq_temp.iloc[:, shuffled_indices]
 
     pc, img3d = stage_data(scRNAseq_temp, cfg)
     spots = pc[['x', 'y', 'z', 'gene']]
@@ -33,7 +33,7 @@ def main_loop(scRNAseq_temp, cfg):
         'SpotReg': cfg['SpotReg'],
         'rSpot': cfg['rSpot'],
         'MisreadDensity': 1e-20,
-        'nNeighbors': 6,
+        'nNeighbors': cfg['nNeighbors'],
         'InsideCellBonus':0,
         'CellCallTolerance': 0.05,
         'voxel_size':[1,1,1]
@@ -89,13 +89,14 @@ if __name__ == '__main__':
     rng = np.random.default_rng(42)  # seed is set here
 
     config = {
-        'n_samples': 1000,
+        'n_samples': 100,
         'mcr': 18,
         'inefficiency': 1.0,
         'rGene': 20,
         'SpotReg': 0.01, #regularization parameter, default 0.1
         'rSpot': 5,   # negative binomial spread, default 2
         'spacing_factor': 2, # regulates how close the pointclouds are to each other. If 2 then they are 2xCellRadius apart.
+        'nNeighbors': 6,
         'rng': rng,
     }
     app(config)

@@ -45,7 +45,7 @@ def pointcloud_grid(radius, pointcloud, spacing_factor, rng):
     spacing_factor = np.int32(spacing_factor)
 
     class_names = np.unique(pointcloud['class'])
-    n_cells = len(class_names)
+    n_cells = pointcloud.label.max()
 
     # Determine grid size
     grid_y = int(np.sqrt(n_cells))
