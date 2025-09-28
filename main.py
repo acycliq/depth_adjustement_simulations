@@ -8,6 +8,54 @@ from nb_utils import simulate_nb_matrices
 from stage import stage_data
 from plotting import confusion_matrix, plot_confusion_matrix
 
+
+def main_loop(scRNAseq_temp, cfg):
+
+    # Randomly shuffle the columns of the simulated data
+    shuffled_columns = cfg['rng'].permutation(scRNAseq_temp.columns)
+    scRNAseq_temp = scRNAseq_temp[shuffled_columns]
+
+    pc, img3d = stage_data(scRNAseq_temp, cfg)
+    spots = pc[['x', 'y', 'z', 'gene']]
+    spots = spots.assign(score = 1)
+    spots = spots.assign(intensity = 1)
+    spots = spots.rename(columns={'z': 'z_plane',
+                                  'gene': 'gene_name'})
+
+
+    coo = [coo_matrix(d) for d in img3d]
+    opts_3D = {
+        'save_data': False,
+        'launch_diagnostics': False,
+        'launch_viewer': False,
+        'Inefficiency': cfg['inefficiency'],
+        'rGene': cfg['rGene'],
+        'SpotReg': cfg['SpotReg'],
+        'rSpot': cfg['rSpot'],
+        'MisreadDensity': 1e-20,
+        'nNeighbors': 6,
+        'InsideCellBonus':0,
+        'CellCallTolerance': 0.05,
+        'voxel_size':[1,1,1]
+    }
+    pciSeq.setup_logger()
+    cellData, geneData = pciSeq.fit(spots=spots, coo=coo, scRNAseq=scRNAseq_temp, opts=opts_3D)
+
+    mapping = dict(pc[['label','class']].drop_duplicates().values)
+    cellData = cellData.assign(actual_class = cellData.Cell_Num.map(lambda d: mapping[d]))
+    out = pd.DataFrame({
+        'cell_label': cellData.Cell_Num.tolist(),
+        'Estimated_class':  cellData.ClassName.values.tolist(),
+        'Actual_class': cellData.actual_class.values.tolist(),
+        'Prob': cellData.Prob.values.tolist(),
+    })
+    out['Actual==Best_class'] = out.Estimated_class == out.Actual_class
+
+    classes = scRNAseq_temp.columns.tolist()
+    cm = confusion_matrix(classes, out)
+    return out, cm, opts_3D
+
+
 def app(cfg):
 
     # Get the Zeisel single cell data
@@ -23,45 +71,7 @@ def app(cfg):
     #3 loop over the sampled single cell data and generate random spots
     num_iter = len(sim_scRNAseq)
     for i in range(num_iter):
-        scRNAseq = sim_scRNAseq[i]
-        pc, img3d = stage_data(scRNAseq, cfg)
-        spots = pc[['x', 'y', 'z', 'gene']]
-        spots = spots.assign(score = 1)
-        spots = spots.assign(intensity = 1)
-        spots = spots.rename(columns={'z': 'z_plane',
-                                      'gene': 'gene_name'})
-
-
-        coo = [coo_matrix(d) for d in img3d]
-        opts_3D = {
-            'save_data': False,
-            'launch_diagnostics': False,
-            'launch_viewer': False,
-            'Inefficiency': cfg['inefficiency'],
-            'rGene': cfg['rGene'],
-            'SpotReg': cfg['SpotReg'],
-            'rSpot': cfg['rSpot'],
-            'MisreadDensity': 1e-20,
-            'nNeighbors': 6,
-            'InsideCellBonus':0,
-            'CellCallTolerance': 0.05,
-            'voxel_size':[1,1,1]
-        }
-        pciSeq.setup_logger()
-        cellData, geneData = pciSeq.fit(spots=spots, coo=coo, scRNAseq=scRNAseq, opts=opts_3D)
-
-        mapping = dict(pc[['label','class']].drop_duplicates().values)
-        cellData = cellData.assign(actual_class = cellData.Cell_Num.map(lambda d: mapping[d]))
-        out = pd.DataFrame({
-            'cell_label': cellData.Cell_Num.tolist(),
-            'Estimated_class':  cellData.ClassName.values.tolist(),
-            'Actual_class': cellData.actual_class.values.tolist(),
-            'Prob': cellData.Prob.values.tolist(),
-        })
-        out['Actual==Best_class'] = out.Estimated_class == out.Actual_class
-
-        classes = scRNAseq.columns.tolist()
-        cm += confusion_matrix(classes, out)
+        out, cm, opts_3D = main_loop(sim_scRNAseq[i], cfg)
 
     # Combine config and opts_3D for complete settings display
     # opts_3D from the last iteration represents the final parameters used
@@ -70,7 +80,6 @@ def app(cfg):
     fig.show(renderer="browser")
 
     return fig
-
 
 
 
@@ -84,7 +93,7 @@ if __name__ == '__main__':
         'inefficiency': 1.0,
         'rGene': 20,
         'SpotReg': 0.01, #regularization parameter, default 0.1
-        'rSpot': 2,   # negative binomial spread, default 2
+        'rSpot': 5,   # negative binomial spread, default 2
         'spacing_factor': 2,
         'rng': rng,
     }
