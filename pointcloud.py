@@ -48,26 +48,26 @@ def pointcloud_grid(radius, pointcloud, spacing_factor, rng):
     n_cells = pointcloud.label.max()
 
     # Determine grid size
-    grid_y = int(np.sqrt(n_cells))
-    grid_x = int(np.ceil(n_cells / grid_y))
+    grid_x = int(np.sqrt(n_cells))
+    grid_z = int(np.ceil(n_cells / grid_x))
     spacing = spacing_factor * radius
 
     # Create grid positions for y and x
-    y_coords = np.arange(grid_y) * spacing + spacing // 2
     x_coords = np.arange(grid_x) * spacing + spacing // 2
+    z_coords = np.arange(grid_z) * spacing + spacing // 2
 
     # Create a grid of x and y positions and flatten them
-    xc, yc = np.meshgrid(x_coords, y_coords)  # X and Y will have shape (grid_y, grid_x)
+    zc, xc = np.meshgrid(z_coords, x_coords)  # X and Y will have shape (grid_y, grid_x)
+    zc = zc.flatten()[:n_cells]
     xc = xc.flatten()[:n_cells]
-    yc = yc.flatten()[:n_cells]
 
     # Generate random z positions for all spheres at once
-    z_coords = rng.integers(2 * radius, 4 * radius + 1, size=n_cells)
+    y_coords = rng.integers(2 * radius, 4 * radius + 1, size=n_cells)
 
     # Create label ids (starting at 1)
     labels = 1 + np.arange(pointcloud.label.max())
 
-    centroids = pd.DataFrame({'label': labels,'xc': xc, 'yc': yc, 'zc': z_coords})
+    centroids = pd.DataFrame({'label': labels,'zc': zc, 'xc': xc, 'yc': y_coords})
 
     # assign a centroid to each pointcloud
     out = pointcloud.merge(centroids, on='label')
@@ -78,9 +78,9 @@ def pointcloud_grid(radius, pointcloud, spacing_factor, rng):
     out.z = out.z + out.zc
 
     # Determine overall grid shape (depth, height, width)
-    max_y = grid_y * spacing
     max_x = grid_x * spacing
-    max_z = 6 * radius  # Sufficient depth
+    max_z = grid_z * spacing
+    max_y = 6 * radius  # Sufficient depth
     shape = (max_z, max_y, max_x)
 
 

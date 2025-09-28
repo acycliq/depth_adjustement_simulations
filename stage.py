@@ -5,12 +5,12 @@ import napari
 from pointcloud import pointcloud, pointcloud_grid
 from img import create_3d_label_image
 
-def stage_data(single_cell_data, config):
+def stage_data(raw_counts, config):
     mcr = config['mcr']
     spacing_factor = config['spacing_factor']
     rng = config['rng']
 
-    pc = pointcloud(single_cell_data, mcr, rng)
+    pc = pointcloud(raw_counts, mcr, rng)
     pc, img_shape = pointcloud_grid(mcr, pc, spacing_factor, rng)
     label_image_3d = create_3d_label_image(img_shape, pc)
 
@@ -60,7 +60,10 @@ def launch_napari(pc, label_image_3d):
     viewer.scale_bar.unit = 'px'
 
     try:
-        viewer.camera.angles = (-90, -90, -90)
+        viewer.camera.set_view_direction(
+            view_direction=(0, -1, 0),  # Looking along Y-axis
+            up_direction=(1, 0, 0)    # Z-axis pointing up
+        )
     except Exception:
         pass
 

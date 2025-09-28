@@ -9,13 +9,13 @@ from stage import stage_data
 from plotting import confusion_matrix, plot_confusion_matrix
 
 
-def main_loop(scRNAseq_temp, cfg):
+def main_loop(raw_counts, scRNAseq, cfg):
 
     # Randomly shuffle the columns of the simulated data
-    shuffled_indices = cfg['rng'].permutation(len(scRNAseq_temp.columns))
-    scRNAseq_temp = scRNAseq_temp.iloc[:, shuffled_indices]
+    shuffled_indices = cfg['rng'].permutation(len(raw_counts.columns))
+    raw_counts = raw_counts.iloc[:, shuffled_indices]
 
-    pc, img3d = stage_data(scRNAseq_temp, cfg)
+    pc, img3d = stage_data(raw_counts, cfg)
     spots = pc[['x', 'y', 'z', 'gene']]
     spots = spots.assign(score = 1)
     spots = spots.assign(intensity = 1)
@@ -39,7 +39,7 @@ def main_loop(scRNAseq_temp, cfg):
         'voxel_size':[1,1,1]
     }
     pciSeq.setup_logger()
-    cellData, geneData = pciSeq.fit(spots=spots, coo=coo, scRNAseq=scRNAseq_temp, opts=opts_3D)
+    cellData, geneData = pciSeq.fit(spots=spots, coo=coo, scRNAseq=scRNAseq, opts=opts_3D)
 
     mapping = dict(pc[['label','class']].drop_duplicates().values)
     cellData = cellData.assign(actual_class = cellData.Cell_Num.map(lambda d: mapping[d]))
@@ -51,27 +51,28 @@ def main_loop(scRNAseq_temp, cfg):
     })
     out['Actual==Best_class'] = out.Estimated_class == out.Actual_class
 
-    classes = scRNAseq_temp.columns.tolist()
+    classes = scRNAseq.columns.tolist()
     cm = confusion_matrix(classes, out)
     return out, cm, opts_3D
 
 
-def app(cfg):
+def app(my_cells, cfg):
 
     # Get the Zeisel single cell data
     scRNAseq = pd.read_csv(os.path.join('data', 'l5_all_scRNAseq.csv'))
     scRNAseq = scRNAseq.set_index('Unnamed: 0')
 
     # 2. simulate single cell data
-    sim_scRNAseq = simulate_nb_matrices(scRNAseq, cfg)
+    my_scRNAseq = scRNAseq[list(my_cells.values())]
+    sim_counts = simulate_nb_matrices(my_scRNAseq, cfg)
 
     # set the confusion matrix
     cm = np.zeros([scRNAseq.shape[1], scRNAseq.shape[1]])
 
     #3 loop over the sampled single cell data and generate random spots
-    num_iter = len(sim_scRNAseq)
+    num_iter = len(sim_counts)
     for i in range(num_iter):
-        out, cm_temp, opts_3D = main_loop(sim_scRNAseq[i], cfg)
+        out, cm_temp, opts_3D = main_loop(sim_counts[i], scRNAseq, cfg)
         cm = cm + cm_temp
 
     # Combine config and opts_3D for complete settings display
@@ -89,16 +90,22 @@ if __name__ == '__main__':
     rng = np.random.default_rng(42)  # seed is set here
 
     config = {
-        'n_samples': 100,
+        'n_samples': 10,
         'mcr': 18,
         'inefficiency': 1.0,
         'rGene': 20,
         'SpotReg': 0.01, #regularization parameter, default 0.1
         'rSpot': 5,   # negative binomial spread, default 2
         'spacing_factor': 2, # regulates how close the pointclouds are to each other. If 2 then they are 2xCellRadius apart.
-        'nNeighbors': 6,
+        'nNeighbors': 2,
         'rng': rng,
     }
-    app(config)
+
+    my_cells = {
+        1: 'TEGLU24',
+        2: 'DGGRC1',
+        3: 'TEGLU24',
+    }
+    app(my_cells, config)
 
 
