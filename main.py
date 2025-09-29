@@ -90,22 +90,78 @@ if __name__ == '__main__':
     rng = np.random.default_rng(42)  # seed is set here
 
     config = {
-        'n_samples': 10,
+        'n_samples': 100,  # Start with small test
         'mcr': 18,
         'inefficiency': 1.0,
         'rGene': 20,
         'SpotReg': 0.01, #regularization parameter, default 0.1
         'rSpot': 5,   # negative binomial spread, default 2
-        'spacing_factor': 2, # regulates how close the pointclouds are to each other. If 2 then they are 2xCellRadius apart.
-        'nNeighbors': 2,
+        'spacing_factor': 4, # regulates how close the pointclouds are to each other. If 2 then they are 2xCellRadius apart.
+        'nNeighbors': 6,
         'rng': rng,
     }
 
     my_cells = {
-        1: 'TEGLU24',
-        2: 'DGGRC1',
-        3: 'TEGLU24',
+        1: 'ABC',
+        2: 'ACTE1',
+        3: 'ACTE2',
+        4: 'DGGRC1',
+        5: 'DGGRC2',
+        6: 'DGNBL1',
+        7: 'DGNBL2',
+        8: 'EPEN',
+        9: 'MFOL1',
+        10: 'MFOL2',
+        11: 'MGL1',
+        12: 'MGL2',
+        13: 'MGL3',
+        14: 'MOL1',
+        15: 'MOL2',
+        16: 'MOL3',
+        17: 'OPC',
+        18: 'PER1',
+        19: 'PER2',
+        20: 'PER3',
+        21: 'TEGLU1',
+        22: 'TEGLU10',
+        23: 'TEGLU11',
+        24: 'TEGLU12',
+        25: 'TEGLU13',
+        26: 'TEGLU14',
+        27: 'TEGLU2',
+        28: 'TEGLU20',
+        29: 'TEGLU21',
+        30: 'TEGLU23',
+        31: 'TEGLU24',
+        32: 'TEGLU3',
+        33: 'TEGLU4',
+        34: 'TEGLU6',
+        35: 'TEGLU7',
+        36: 'TEGLU8',
+        37: 'TEGLU9',
+        38: 'TEINH10',
+        39: 'TEINH11',
+        40: 'TEINH12',
+        41: 'TEINH13',
+        42: 'TEINH14',
+        43: 'TEINH15',
+        44: 'TEINH16',
+        45: 'TEINH17',
+        46: 'TEINH18',
+        47: 'TEINH19',
+        48: 'TEINH20',
+        49: 'TEINH21',
+        50: 'TEINH4',
+        51: 'TEINH5',
+        52: 'TEINH6',
+        53: 'TEINH7',
+        54: 'TEINH8',
+        55: 'TEINH9',
+        56: 'VECA',
+        57: 'VECC',
+        58: 'VECV',
+        59: 'VLMC1',
+        60: 'VLMC2',
+        61: 'VSMCA'
     }
     app(my_cells, config)
-
-
