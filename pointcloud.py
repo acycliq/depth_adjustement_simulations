@@ -48,27 +48,27 @@ def pointcloud_grid(radius, pointcloud, spacing_factor, rng):
     n_cells = pointcloud.label.max()
 
     # Determine grid size - arrange cells in rectangular grid
-    grid_x = int(np.sqrt(n_cells))  # Grid width (approximate square root)
-    grid_z = int(np.ceil(n_cells / grid_x))  # Grid height (ensure all cells fit)
+    grid_y = int(np.sqrt(n_cells))  # Grid width (approximate square root)
+    grid_x = int(np.ceil(n_cells / grid_y))  # Grid height (ensure all cells fit)
     spacing = spacing_factor * radius  # Distance between cell centers
 
     # Create grid positions for X and Z coordinates
     x_coords = np.arange(grid_x) * spacing + spacing // 2  # X positions with offset
-    z_coords = np.arange(grid_z) * spacing + spacing // 2  # Z positions with offset
+    y_coords = np.arange(grid_y) * spacing + spacing // 2  # Z positions with offset
 
     # Generate all grid coordinate combinations and flatten to list
-    zc, xc = np.meshgrid(z_coords, x_coords)  # Create 2D coordinate grids
-    zc = zc.flatten()[:n_cells]  # Flatten and trim to exact number of cells
-    xc = xc.flatten()[:n_cells]  # Flatten and trim to exact number of cells
+    xc, yc = np.meshgrid(x_coords, y_coords)  # Create 2D coordinate grids
+    yc = yc.flatten()[:n_cells]  # Flatten and trim to the exact number of cells
+    xc = xc.flatten()[:n_cells]  # Flatten and trim to the exact number of cells
 
     # Generate random Y positions (depth) for each cell
-    y_coords = rng.integers(2 * radius, 4 * radius + 1, size=n_cells)
+    z_coords = rng.integers(2 * radius, 4 * radius + 1, size=n_cells)
 
     # Create label mapping for cell centroids
     labels = 1 + np.arange(pointcloud.label.max())
 
     # Create dataframe with centroid coordinates for each cell
-    centroids = pd.DataFrame({'label': labels,'zc': zc, 'xc': xc, 'yc': y_coords})
+    centroids = pd.DataFrame({'label': labels,'yc': yc, 'xc': xc, 'zc': z_coords})
 
     # Merge centroids with pointcloud data to assign positions
     out = pointcloud.merge(centroids, on='label')
@@ -80,8 +80,8 @@ def pointcloud_grid(radius, pointcloud, spacing_factor, rng):
 
     # Determine overall grid shape (depth, height, width)
     max_x = grid_x * spacing
-    max_z = grid_z * spacing
-    max_y = 6 * radius  # Sufficient depth
+    max_y = grid_y * spacing
+    max_z = 6 * radius  # Sufficient depth
     shape = (max_z, max_y, max_x)
 
 
