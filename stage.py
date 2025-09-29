@@ -61,9 +61,10 @@ def launch_napari(pc, label_image_3d):
 
     try:
         viewer.camera.set_view_direction(
-            view_direction=(0, -1, 0),  # Looking along Y-axis
+            view_direction=(0, 1, 0),  # Looking along Y-axis
             up_direction=(1, 0, 0)    # Z-axis pointing up
         )
+        viewer.camera.zoom = 4.0
     except Exception:
         pass
 
