@@ -1,0 +1,39 @@
+label,class
+1,004 L6 IT CTX Glut
+2,005 L5 IT CTX Glut
+3,006 L4/5 IT CTX Glut
+4,007 L2/3 IT CTX Glut
+5,016 CA1-ProS Glut
+6,017 CA3 Glut
+7,022 L5 ET CTX Glut
+8,025 CA2-FC-IG Glut
+9,029 L6b CTX Glut
+10,030 L6 CT CTX Glut
+11,031 CT SUB Glut
+12,032 L5 NP CTX Glut
+13,036 HPF CR Glut
+14,037 DG Glut
+15,038 DG-PIR Ex IMN
+16,045 OB-STR-CTX Inh IMN
+17,046 Vip Gaba
+18,047 Sncg Gaba
+19,048 RHP-COA Ndnf Gaba
+20,049 Lamp5 Gaba
+21,050 Lamp5 Lhx6 Gaba
+22,051 Pvalb chandelier Gaba
+23,052 Pvalb Gaba
+24,053 Sst Gaba
+25,056 Sst Chodl Gaba
+26,319 Astro-TE NN
+27,326 OPC NN
+28,327 Oligo NN
+29,329 ABC NN
+30,330 VLMC NN
+31,331 Peri NN
+32,332 SMC NN
+33,333 Endo NN
+34,334 Microglia NN
+35,335 BAM NN
+36,336 Monocytes NN
+37,337 DC NN
+38,338 Lymphoid NN

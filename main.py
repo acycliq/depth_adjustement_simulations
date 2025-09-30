@@ -55,12 +55,25 @@ def main_loop(raw_counts, scRNAseq, cfg):
     cm = confusion_matrix(classes, out)
     return out, cm, opts_3D
 
+def get_scNAseq(name):
+    if name == 'zeisel':
+        # Get the Zeisel single cell data
+        scRNAseq = pd.read_csv(os.path.join('data', 'scRNAseq', 'zeisel', 'l5_all_scRNAseq.csv'))
+        scRNAseq = scRNAseq.set_index('Unnamed: 0')
+    elif name == 'yao':
+        # Get the Zeisel single cell data
+        scRNAseq = pd.read_csv(os.path.join('data', 'scRNAseq', 'yao', 'scRNAseq_final.csv'))
+        scRNAseq = scRNAseq.set_index('Unnamed: 0')
+    else:
+        raise ValueError('scRNAseq name not recognized')
+    return scRNAseq
+
+
 
 def app(my_cells, cfg):
 
     # Get the Zeisel single cell data
-    scRNAseq = pd.read_csv(os.path.join('data', 'l5_all_scRNAseq.csv'))
-    scRNAseq = scRNAseq.set_index('Unnamed: 0')
+    scRNAseq = get_scNAseq(cfg['scRNAseq_name'])
 
     # 2. simulate single cell data
     my_scRNAseq = scRNAseq[list(my_cells.values())]
@@ -91,6 +104,7 @@ if __name__ == '__main__':
 
     config = {
         'n_samples': 100,  # Start with small test
+        'scRNAseq_name': 'zeisel',
         'mcr': 18,
         'inefficiency': 1.0,
         'rGene': 20,
@@ -101,67 +115,8 @@ if __name__ == '__main__':
         'rng': rng,
     }
 
-    my_cells = {
-        1: 'ABC',
-        2: 'ACTE1',
-        3: 'ACTE2',
-        4: 'DGGRC1',
-        5: 'DGGRC2',
-        6: 'DGNBL1',
-        7: 'DGNBL2',
-        8: 'EPEN',
-        9: 'MFOL1',
-        10: 'MFOL2',
-        11: 'MGL1',
-        12: 'MGL2',
-        13: 'MGL3',
-        14: 'MOL1',
-        15: 'MOL2',
-        16: 'MOL3',
-        17: 'OPC',
-        18: 'PER1',
-        19: 'PER2',
-        20: 'PER3',
-        21: 'TEGLU1',
-        22: 'TEGLU10',
-        23: 'TEGLU11',
-        24: 'TEGLU12',
-        25: 'TEGLU13',
-        26: 'TEGLU14',
-        27: 'TEGLU2',
-        28: 'TEGLU20',
-        29: 'TEGLU21',
-        30: 'TEGLU23',
-        31: 'TEGLU24',
-        32: 'TEGLU3',
-        33: 'TEGLU4',
-        34: 'TEGLU6',
-        35: 'TEGLU7',
-        36: 'TEGLU8',
-        37: 'TEGLU9',
-        38: 'TEINH10',
-        39: 'TEINH11',
-        40: 'TEINH12',
-        41: 'TEINH13',
-        42: 'TEINH14',
-        43: 'TEINH15',
-        44: 'TEINH16',
-        45: 'TEINH17',
-        46: 'TEINH18',
-        47: 'TEINH19',
-        48: 'TEINH20',
-        49: 'TEINH21',
-        50: 'TEINH4',
-        51: 'TEINH5',
-        52: 'TEINH6',
-        53: 'TEINH7',
-        54: 'TEINH8',
-        55: 'TEINH9',
-        56: 'VECA',
-        57: 'VECC',
-        58: 'VECV',
-        59: 'VLMC1',
-        60: 'VLMC2',
-        61: 'VSMCA'
-    }
+    # pass here some cell and the corresponding class
+    my_cells = pd.read_csv(os.path.join('data', 'cells', 'zeisel', 'cells.csv'))
+    my_cells = my_cells.set_index("label")["class"].to_dict()
+
     app(my_cells, config)
