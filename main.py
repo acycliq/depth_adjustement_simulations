@@ -5,7 +5,7 @@ from scipy.sparse import coo_matrix
 
 import pciSeq
 from nb_utils import simulate_nb_matrices
-from stage import stage_data
+from stage import stage_data, launch_napari
 from plotting import confusion_matrix, plot_confusion_matrix
 
 
@@ -16,6 +16,8 @@ def main_loop(raw_counts, scRNAseq, cfg):
     raw_counts = raw_counts.iloc[:, shuffled_indices]
 
     pc, img3d = stage_data(raw_counts, cfg)
+    # launch_napari(pc, img3d)
+
     spots = pc[['x', 'y', 'z', 'gene']]
     spots = spots.assign(score = 1)
     spots = spots.assign(intensity = 1)
@@ -70,13 +72,27 @@ def get_scNAseq(name):
 
 
 
-def app(my_cells, cfg):
+def app(cells_dict, cfg):
+    use_replicates = cfg.get('use_replicates')
+    if not isinstance(use_replicates, bool):
+        raise ValueError("cfg['use_replicates'] must be either True or False")
 
     # Get the Zeisel single cell data
     scRNAseq = get_scNAseq(cfg['scRNAseq_name'])
 
     # 2. simulate single cell data
-    my_scRNAseq = scRNAseq[list(my_cells.values())]
+    my_cells = list(cells_dict.values())
+    if use_replicates:
+        # take the unique columns, then use `inv` to replicate them
+        # so the final dataframe has one column per entry in my_cells,
+        # with repeated columns where a cell class appears multiple times
+        u_cells, inv = np.unique(my_cells, return_inverse=True)
+        my_scRNAseq = scRNAseq[u_cells]          # unique cols
+        my_scRNAseq = my_scRNAseq.iloc[:, inv]   # expand back to original
+    else:
+        my_scRNAseq = scRNAseq[my_cells]
+
+
     sim_counts = simulate_nb_matrices(my_scRNAseq, cfg)
 
     # set the confusion matrix
@@ -104,19 +120,25 @@ if __name__ == '__main__':
 
     config = {
         'n_samples': 100,  # Start with small test
+        'use_replicates': True,
         'scRNAseq_name': 'zeisel',
         'mcr': 18,
         'inefficiency': 1.0,
         'rGene': 20,
-        'SpotReg': 0.01, #regularization parameter, default 0.1
+        'SpotReg': 1e-5, #regularization parameter, default 0.1
         'rSpot': 5,   # negative binomial spread, default 2
-        'spacing_factor': 4, # regulates how close the pointclouds are to each other. If 2 then they are 2xCellRadius apart.
-        'nNeighbors': 6,
+        'spacing_factor': 6, # regulates how close the pointclouds are to each other. If 2 then they are 2xCellRadius apart.
+        'nNeighbors': 2,
         'rng': rng,
     }
 
     # pass here some cell and the corresponding class
     my_cells = pd.read_csv(os.path.join('data', 'cells', 'zeisel', 'cells.csv'))
     my_cells = my_cells.set_index("label")["class"].to_dict()
+    # my_cells = {
+    #     1: 'TEGLU24',
+    #     2: 'TEGLU24',
+    #     3: 'TEGLU24'
+    # }
 
     app(my_cells, config)
