@@ -39,7 +39,32 @@ def pointcloud(df, r, rng):
     return data
 
 
-def pointcloud_grid(radius, pointcloud, spacing_factor, rng):
+def pointcloud_grid(radius, pointcloud, spacing_factor, rng, axis_mapping=None):
+    """
+    Arrange cells in 3D space using a regular grid on two axes and random positioning on the third axis.
+
+    Parameters:
+    -----------
+    axis_mapping : dict, optional
+        Maps grid and depth axes to coordinate systems.
+
+        Keys:
+        - 'grid_axis_0': First grid dimension (e.g., 'x')
+        - 'grid_axis_1': Second grid dimension (e.g., 'y')
+        - 'depth_axis': Random depth dimension (e.g., 'z')
+
+        Examples:
+        - Default (X-Y grid, Z depth):
+          {'grid_axis_0': 'x', 'grid_axis_1': 'y', 'depth_axis': 'z'}
+        - X-Z grid, Y depth:
+          {'grid_axis_0': 'x', 'grid_axis_1': 'z', 'depth_axis': 'y'}
+        - Y-Z grid, X depth:
+          {'grid_axis_0': 'y', 'grid_axis_1': 'z', 'depth_axis': 'x'}
+    """
+
+    # Default axis mapping: X-Y grid, Z depth (preserves original behavior)
+    if axis_mapping is None:
+        axis_mapping = {'grid_axis_0': 'x', 'grid_axis_1': 'y', 'depth_axis': 'z'}
 
     radius = np.int32(radius)
     spacing_factor = np.int32(spacing_factor)
@@ -48,41 +73,53 @@ def pointcloud_grid(radius, pointcloud, spacing_factor, rng):
     n_cells = pointcloud.label.max()
 
     # Determine grid size - arrange cells in rectangular grid
-    grid_y = int(np.sqrt(n_cells))  # Grid width (approximate square root)
-    grid_x = int(np.ceil(n_cells / grid_y))  # Grid height (ensure all cells fit)
+    grid_dim_1 = int(np.sqrt(n_cells))  # Grid width (approximate square root)
+    grid_dim_0 = int(np.ceil(n_cells / grid_dim_1))  # Grid height (ensure all cells fit)
     spacing = spacing_factor * radius  # Distance between cell centers
 
-    # Create grid positions for X and Y coordinates
-    x_coords = np.arange(grid_x) * spacing + spacing // 2  # X positions with offset
-    y_coords = np.arange(grid_y) * spacing + spacing // 2  # Y positions with offset
+    # Create grid positions for the two grid axes
+    axis_0_coords = np.arange(grid_dim_0) * spacing + spacing // 2  # Grid axis 0 positions
+    axis_1_coords = np.arange(grid_dim_1) * spacing + spacing // 2  # Grid axis 1 positions
 
     # Generate all grid coordinate combinations and flatten to list
-    xc, yc = np.meshgrid(x_coords, y_coords)  # Create 2D coordinate grids
-    yc = yc.flatten()[:n_cells]  # Flatten and trim to the exact number of cells
-    xc = xc.flatten()[:n_cells]  # Flatten and trim to the exact number of cells
+    axis_0_grid, axis_1_grid = np.meshgrid(axis_0_coords, axis_1_coords)  # Create 2D coordinate grids
+    axis_1_centers = axis_1_grid.flatten()[:n_cells]  # Flatten and trim to exact number of cells
+    axis_0_centers = axis_0_grid.flatten()[:n_cells]  # Flatten and trim to exact number of cells
 
-    # Generate random Z positions (depth) for each cell
-    z_coords = rng.integers(2 * radius, 4 * radius + 1, size=n_cells)
+    # Generate random positions for the depth axis
+    depth_coords = rng.integers(2 * radius, 4 * radius + 1, size=n_cells)
 
     # Create label mapping for cell centroids
     labels = 1 + np.arange(pointcloud.label.max())
 
+    # Map generic axis coordinates to specific x,y,z coordinates
+    grid_axis_0 = axis_mapping['grid_axis_0']
+    grid_axis_1 = axis_mapping['grid_axis_1']
+    depth_axis = axis_mapping['depth_axis']
+
+    # Create coordinate dictionaries for each axis
+    coord_data = {'label': labels}
+    coord_data[f'{grid_axis_0}c'] = axis_0_centers
+    coord_data[f'{grid_axis_1}c'] = axis_1_centers
+    coord_data[f'{depth_axis}c'] = depth_coords
+
     # Create dataframe with centroid coordinates for each cell
-    centroids = pd.DataFrame({'label': labels,'yc': yc, 'xc': xc, 'zc': z_coords})
+    centroids = pd.DataFrame(coord_data)
 
     # Merge centroids with pointcloud data to assign positions
     out = pointcloud.merge(centroids, on='label')
 
-    # Shift all points from origin to their assigned grid positions
-    out.x = out.x + out.xc  # Move to X grid position
-    out.y = out.y + out.yc  # Move to Y grid position
-    out.z = out.z + out.zc  # Add random depth variation
+    # Shift all points from origin to their assigned positions
+    for axis in ['x', 'y', 'z']:
+        out[axis] = out[axis] + out[f'{axis}c']
 
-    # Determine overall grid shape (depth, height, width)
-    max_x = grid_x * spacing
-    max_y = grid_y * spacing
-    max_z = 6 * radius  # Sufficient depth
-    shape = (max_z, max_y, max_x)
+    # Determine overall grid shape - map dimensions to correct axes
+    shape_dict = {}
+    shape_dict[grid_axis_0] = grid_dim_0 * spacing
+    shape_dict[grid_axis_1] = grid_dim_1 * spacing
+    shape_dict[depth_axis] = 6 * radius  # Sufficient depth
 
+    # Return shape in (z, y, x) order for consistency with image conventions
+    shape = (shape_dict['z'], shape_dict['y'], shape_dict['x'])
 
     return out, shape
