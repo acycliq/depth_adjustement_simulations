@@ -11,10 +11,8 @@ def stage_data(raw_counts, config):
     rng = config['rng']
 
     pc = pointcloud(raw_counts, mcr, rng)
-    pc, img_shape = pointcloud_grid(mcr, pc, spacing_factor, rng)
+    pc, img_shape = pointcloud_grid(mcr, pc, spacing_factor, rng, {'grid_axis_0': 'z', 'grid_axis_1': 'x', 'depth_axis': 'y'})
     label_image_3d = create_3d_label_image(img_shape, pc)
-
-    # launch_napari(pc, label_image_3d)
 
     return pc, label_image_3d
 
@@ -61,7 +59,7 @@ def launch_napari(pc, label_image_3d):
 
     try:
         viewer.camera.set_view_direction(
-            view_direction=(0, 1, 0),  # Looking along Y-axis
+            view_direction=(0, -1, 0),  # Looking along Y-axis
             up_direction=(1, 0, 0)    # Z-axis pointing up
         )
         viewer.camera.zoom = 4.0
