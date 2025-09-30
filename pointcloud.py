@@ -52,16 +52,16 @@ def pointcloud_grid(radius, pointcloud, spacing_factor, rng):
     grid_x = int(np.ceil(n_cells / grid_y))  # Grid height (ensure all cells fit)
     spacing = spacing_factor * radius  # Distance between cell centers
 
-    # Create grid positions for X and Z coordinates
+    # Create grid positions for X and Y coordinates
     x_coords = np.arange(grid_x) * spacing + spacing // 2  # X positions with offset
-    y_coords = np.arange(grid_y) * spacing + spacing // 2  # Z positions with offset
+    y_coords = np.arange(grid_y) * spacing + spacing // 2  # Y positions with offset
 
     # Generate all grid coordinate combinations and flatten to list
     xc, yc = np.meshgrid(x_coords, y_coords)  # Create 2D coordinate grids
     yc = yc.flatten()[:n_cells]  # Flatten and trim to the exact number of cells
     xc = xc.flatten()[:n_cells]  # Flatten and trim to the exact number of cells
 
-    # Generate random Y positions (depth) for each cell
+    # Generate random Z positions (depth) for each cell
     z_coords = rng.integers(2 * radius, 4 * radius + 1, size=n_cells)
 
     # Create label mapping for cell centroids
@@ -74,9 +74,9 @@ def pointcloud_grid(radius, pointcloud, spacing_factor, rng):
     out = pointcloud.merge(centroids, on='label')
 
     # Shift all points from origin to their assigned grid positions
-    out.x = out.x + out.xc  # Move from (0,0,0) to grid position
-    out.y = out.y + out.yc  # Add random depth variation
-    out.z = out.z + out.zc  # Position in Z grid
+    out.x = out.x + out.xc  # Move to X grid position
+    out.y = out.y + out.yc  # Move to Y grid position
+    out.z = out.z + out.zc  # Add random depth variation
 
     # Determine overall grid shape (depth, height, width)
     max_x = grid_x * spacing
