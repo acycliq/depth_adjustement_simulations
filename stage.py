@@ -10,7 +10,7 @@ def stage_data(raw_counts, config):
     spacing_factor = config['spacing_factor']
     rng = config['rng']
 
-    pc = pointcloud(raw_counts, mcr, rng)
+    pc = pointcloud(raw_counts, config)
     pc, img_shape = pointcloud_grid(mcr, pc, spacing_factor, rng, {'grid_axis_0': 'z', 'grid_axis_1': 'x', 'depth_axis': 'y'})
     label_image_3d = create_3d_label_image(img_shape, pc)
 

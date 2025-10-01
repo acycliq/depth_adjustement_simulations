@@ -6,77 +6,48 @@ def pointcloud(df, config):
     # generate random spots from the i-th simulated single cell data
     r = config['mcr']
     rng = config['rng']
+    use_replicates = config.get('use_replicates', False)
 
     n_cols = df.shape[1]
-    n_rows = df.shape[0]
-
-    # Check for duplicate column names (same class cells)
     col_names = df.columns.tolist()
-    has_duplicates = len(set(col_names)) < n_cols
 
-    if has_duplicates:
-        # Process cells one by one, reusing points for duplicate class names
-        all_data = []
-        class_points = {}  # Cache points for each class name
+    all_data = []
+    class_points = {}  # Cache points for each class when use_replicates=True
 
-        for cell_idx in range(n_cols):
-            class_name = col_names[cell_idx]
-            cell_counts = df.iloc[:, cell_idx].values
+    for cell_idx in range(n_cols):
+        class_name = col_names[cell_idx]
+        cell_counts = df.iloc[:, cell_idx].values
 
-            if class_name in class_points:
-                # Reuse points from first occurrence of this class
-                cell_data = class_points[class_name].copy()
-                cell_data['label'] = cell_idx + 1
-            else:
-                # Generate new points for this class
-                genes = df.index.tolist()
-                gene_counts = cell_counts
+        # If use_replicates=True and we've seen this class, reuse spatial coords
+        if use_replicates and class_name in class_points:
+            cell_data = class_points[class_name].copy()
+            cell_data['label'] = cell_idx + 1
+        else:
+            # Generate new points for this cell
+            genes = df.index.tolist()
+            genes_expanded = np.repeat(genes, cell_counts.astype(int))
+            counts = cell_counts.sum().astype(int)
 
-                genes_expanded = np.repeat(genes, gene_counts.astype(int))
-                counts = gene_counts.sum().astype(int)
+            points = rng.normal(loc=[0, 0, 0], scale=r, size=(counts, 3))
+            r_vals = r * np.ones(counts)
 
-                points = rng.normal(loc=[0, 0, 0], scale=r, size=(counts, 3))
-                r_vals = r * np.ones(counts)
+            cell_data = pd.DataFrame({
+                'gene': genes_expanded,
+                'x': points[:, 0],
+                'y': points[:, 1],
+                'z': points[:, 2],
+                'r': r_vals,
+                'label': cell_idx + 1,
+                'class': class_name
+            })
 
-                cell_data = pd.DataFrame({
-                    'gene': genes_expanded,
-                    'x': points[:, 0],
-                    'y': points[:, 1],
-                    'z': points[:, 2],
-                    'r': r_vals,
-                    'label': cell_idx + 1,
-                    'class': class_name
-                })
-
-                # Cache for future cells with same class
+            # Cache if use_replicates=True
+            if use_replicates:
                 class_points[class_name] = cell_data.copy()
 
-            all_data.append(cell_data)
+        all_data.append(cell_data)
 
-        data = pd.concat(all_data, ignore_index=True)
-    else:
-        # Original logic for unique classes
-        genes = df.index.tolist()
-        genes = np.tile(genes, [1, n_cols])
-
-        actual_class = df.columns.tolist()
-        actual_class = np.tile(actual_class, [n_rows, 1]).ravel(order='F')
-
-        labels = 1 + np.arange(n_cols)
-        labels = np.tile(labels, [n_rows, 1]).ravel(order='F')
-
-        gene_counts = df.values.ravel(order='F')
-        genes = np.repeat(genes, gene_counts)
-        actual_class = np.repeat(actual_class, gene_counts)
-        labels = np.repeat(labels, gene_counts)
-
-        counts = gene_counts.sum()
-        points = rng.normal(loc=[0, 0, 0], scale=r, size=(counts, 3))
-        r_vals = r * np.ones(points.shape[0])
-
-        data = np.column_stack((genes, points, r_vals, labels, actual_class))
-        data = pd.DataFrame(data, columns=['gene', 'x', 'y', 'z', 'r', 'label', 'class'])
-
+    data = pd.concat(all_data, ignore_index=True)
     data = data.astype({
         'x': np.float32,
         'y': np.float32,
