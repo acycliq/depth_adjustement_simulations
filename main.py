@@ -12,8 +12,9 @@ from plotting import confusion_matrix, plot_confusion_matrix
 def main_loop(raw_counts, scRNAseq, cfg):
 
     # Randomly shuffle the columns of the simulated data
-    shuffled_indices = cfg['rng'].permutation(len(raw_counts.columns))
-    raw_counts = raw_counts.iloc[:, shuffled_indices]
+    if cfg['shuffle']:
+        shuffled_indices = cfg['rng'].permutation(len(raw_counts.columns))
+        raw_counts = raw_counts.iloc[:, shuffled_indices]
 
     pc, img3d = stage_data(raw_counts, cfg)
     # launch_napari(pc, img3d)
@@ -74,6 +75,7 @@ def get_scNAseq(name):
 
 def app(cells_dict, cfg):
     use_replicates = cfg.get('use_replicates')
+    count_multipliers = cfg.get('count_multipliers')
     if not isinstance(use_replicates, bool):
         raise ValueError("cfg['use_replicates'] must be either True or False")
 
@@ -91,7 +93,14 @@ def app(cells_dict, cfg):
         sim_counts = simulate_nb_matrices(my_scRNAseq, cfg)# unique cols
         sim_counts = [d.iloc[:, inv] for d in sim_counts]  # expand back to original
     else:
-        my_scRNAseq = scRNAseq[my_cells]
+        my_scRNAseq = scRNAseq[my_cells].copy()
+
+        for j in range(my_scRNAseq.shape[1]):
+            factor = count_multipliers[j] if j < len(count_multipliers) else 1
+            col = my_scRNAseq.iloc[:, j].to_numpy()        # get column as numpy array
+            top_idx = col.argsort()[-20:]                   # indices of top 5 values
+            col[top_idx] = col[top_idx] * factor           # scale those values
+            my_scRNAseq.iloc[:, j] = col                   # write back
         sim_counts = simulate_nb_matrices(my_scRNAseq, cfg)
 
     # set the confusion matrix
@@ -119,8 +128,10 @@ if __name__ == '__main__':
 
     config = {
         'n_samples': 100,  # Start with small test
-        'use_replicates': True,
+        'use_replicates': False, # if true the counts and spatial coords are the same for cells with the same class
+        'shuffle': False,  # if true then the order of the cells is shuffled
         'scRNAseq_name': 'zeisel',
+        'count_multipliers': [0.05, 1.0, 2.0], # will scale the counts of the top 5 genes for cell1, cell2, cell3 by this factor
         'mcr': 18,
         'inefficiency': 1.0,
         'rGene': 20,
@@ -136,7 +147,7 @@ if __name__ == '__main__':
     # my_cells = my_cells.set_index("label")["class"].to_dict()
     my_cells = {
         1: 'TEGLU24',
-        2: 'MFOL1',
+        2: 'TEGLU24',
         3: 'TEGLU24',
         # 4: 'TEGLU21'
     }
