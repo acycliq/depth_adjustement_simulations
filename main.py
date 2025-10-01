@@ -129,27 +129,28 @@ if __name__ == '__main__':
     config = {
         'n_samples': 100,  # Start with small test
         'use_replicates': False, # if true the counts and spatial coords are the same for cells with the same class
-        'shuffle': False,  # if true then the order of the cells is shuffled
+        'shuffle': True,  # if true then the order of the cells is shuffled
         'scRNAseq_name': 'zeisel',
-        'count_multipliers': [0.05, 1.0, 2.0], # will scale the counts of the top 5 genes for cell1, cell2, cell3 by this factor
+        # 'count_multipliers': [0.05, 1.0, 2.0], # will scale the counts of the top 5 genes for cell1, cell2, cell3 by this factor
+        'count_multipliers': [1],
         'mcr': 18,
         'inefficiency': 1.0,
         'rGene': 20,
         'SpotReg': 1e-5, #regularization parameter, default 0.1
         'rSpot': 5,   # negative binomial spread, default 2
         'spacing_factor': 6, # regulates how close the pointclouds are to each other. If 2 then they are 2xCellRadius apart.
-        'nNeighbors': 2,
+        'nNeighbors': 6,
         'rng': rng,
     }
 
     # pass here some cell and the corresponding class
-    # my_cells = pd.read_csv(os.path.join('data', 'cells', 'zeisel', 'cells.csv'))
-    # my_cells = my_cells.set_index("label")["class"].to_dict()
-    my_cells = {
-        1: 'TEGLU24',
-        2: 'TEGLU24',
-        3: 'TEGLU24',
-        # 4: 'TEGLU21'
-    }
+    my_cells = pd.read_csv(os.path.join('data', 'cells', 'zeisel', 'cells.csv'))
+    my_cells = my_cells.set_index("label")["class"].to_dict()
+    # my_cells = {
+    #     1: 'TEGLU24',
+    #     2: 'TEGLU24',
+    #     3: 'TEGLU24',
+    #     # 4: 'TEGLU21'
+    # }
 
     app(my_cells, config)
