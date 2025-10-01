@@ -87,13 +87,12 @@ def app(cells_dict, cfg):
         # so the final dataframe has one column per entry in my_cells,
         # with repeated columns where a cell class appears multiple times
         u_cells, inv = np.unique(my_cells, return_inverse=True)
-        my_scRNAseq = scRNAseq[u_cells]          # unique cols
-        my_scRNAseq = my_scRNAseq.iloc[:, inv]   # expand back to original
+        my_scRNAseq = scRNAseq[u_cells]
+        sim_counts = simulate_nb_matrices(my_scRNAseq, cfg)# unique cols
+        sim_counts = [d.iloc[:, inv] for d in sim_counts]  # expand back to original
     else:
         my_scRNAseq = scRNAseq[my_cells]
-
-
-    sim_counts = simulate_nb_matrices(my_scRNAseq, cfg)
+        sim_counts = simulate_nb_matrices(my_scRNAseq, cfg)
 
     # set the confusion matrix
     cm = np.zeros([scRNAseq.shape[1], scRNAseq.shape[1]])
@@ -133,12 +132,13 @@ if __name__ == '__main__':
     }
 
     # pass here some cell and the corresponding class
-    my_cells = pd.read_csv(os.path.join('data', 'cells', 'zeisel', 'cells.csv'))
-    my_cells = my_cells.set_index("label")["class"].to_dict()
-    # my_cells = {
-    #     1: 'TEGLU24',
-    #     2: 'TEGLU24',
-    #     3: 'TEGLU24'
-    # }
+    # my_cells = pd.read_csv(os.path.join('data', 'cells', 'zeisel', 'cells.csv'))
+    # my_cells = my_cells.set_index("label")["class"].to_dict()
+    my_cells = {
+        1: 'TEGLU24',
+        2: 'MFOL1',
+        3: 'TEGLU24',
+        # 4: 'TEGLU21'
+    }
 
     app(my_cells, config)
