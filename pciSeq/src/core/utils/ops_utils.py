@@ -538,7 +538,7 @@ def empirical_mean(spots, cells):
     return pd.DataFrame(xyz_bar, columns=['x', 'y', 'z'], dtype=np.float32)
 
 
-def gene_density(spots, config) -> pd.DataFrame:
+def gene_density(spots, config, n_bins=3, eps=1e-4) -> pd.DataFrame:
     """
     Calculate gene density adjustment values across imaging planes.
 
@@ -565,25 +565,30 @@ def gene_density(spots, config) -> pd.DataFrame:
     """
 
     data = spots.data.assign(gene_id=spots.gene_id)
+    n_planes = spots.data.plane_id.max()
+
+    # assign each plane to a bin: 0 = bottom, 1 = middle, etc.
+    data = data.assign(
+        bin_id = data.plane_id * n_bins // (n_planes+1)
+    )
 
     # Count spots per plane/gene_name and pivot
-    counts = data.groupby(["plane_id", "gene_name"]).size().unstack(fill_value=0)
-
-    # Ensure all planes are represented
-    all_planes = np.arange(config['img_dim']['n_planes'])
-    counts = counts.reindex(index=all_planes, columns=sorted(counts.columns), fill_value=0)
-
-    # Calculate means over non-zero values only
+    counts = data.groupby(["bin_id", "gene_name"]).size().unstack(fill_value=0)
     gene_means = counts.replace(0, np.nan).mean(axis=0)
 
-    # Normalize by gene means (density calculation).
-    # if an element is zero, set it to 1. Effectively that means that if the gene is not present on that plane,
-    # then dont make any adjustment to the single cell data
     density = counts.div(gene_means, axis=1).fillna(0).astype(np.float32)
-    density[density == 0] = 1
+    density.index.name = "bin_id"
+
+    df = pd.DataFrame({
+        'plane_id': np.arange(n_planes),
+        'bin_id': np.arange(n_planes) * n_bins // (n_planes+1)
+    })
+    density = density.merge(df, how='left', on=['bin_id']).drop(columns=['bin_id', 'plane_id'])
+    density = density + 0.00001
+
 
     # print("REMOVE THIS - REMOVE THIS")
     # density = pd.DataFrame(np.ones(density.shape)) # REMOVE THIS - REMOVE THIS
-    return density # num_planes x num_genes
+    return density  # num_planes x num_genes
 
 
