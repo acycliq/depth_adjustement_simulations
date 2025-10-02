@@ -95,13 +95,14 @@ def app(cells_dict, cfg):
     else:
         my_scRNAseq = scRNAseq[my_cells].copy()
 
-        for j in range(my_scRNAseq.shape[1]):
-            factor = count_multipliers[j] if j < len(count_multipliers) else 1
-            col = my_scRNAseq.iloc[:, j].to_numpy()        # get column as numpy array
-            top_idx = col.argsort()[-20:]                   # indices of top 5 values
-            col[top_idx] = col[top_idx] * factor           # scale those values
-            my_scRNAseq.iloc[:, j] = col                   # write back
         sim_counts = simulate_nb_matrices(my_scRNAseq, cfg)
+        for df in sim_counts:
+            for j in range(df.shape[1]):
+                factor = count_multipliers[j] if j < len(count_multipliers) else 1
+                col = df.iloc[:, j].to_numpy()        # get column as numpy array
+                top_idx = col.argsort()[-25:]                   # indices of top 5 values
+                col[top_idx] = col[top_idx] * factor           # scale those values
+                df.iloc[:, j] = col                   # write back
 
     # set the confusion matrix
     cm = np.zeros([scRNAseq.shape[1], scRNAseq.shape[1]])
@@ -129,28 +130,27 @@ if __name__ == '__main__':
     config = {
         'n_samples': 100,  # Start with small test
         'use_replicates': False, # if true the counts and spatial coords are the same for cells with the same class
-        'shuffle': True,  # if true then the order of the cells is shuffled
+        'shuffle': False,  # if true then the order of the cells is shuffled
         'scRNAseq_name': 'zeisel',
-        # 'count_multipliers': [0.05, 1.0, 2.0], # will scale the counts of the top 5 genes for cell1, cell2, cell3 by this factor
-        'count_multipliers': [1],
+        'count_multipliers': [0.2, 1.0, 5.0], # will scale the counts of the top 5 genes for cell1, cell2, cell3 by this factor
         'mcr': 18,
         'inefficiency': 1.0,
         'rGene': 20,
         'SpotReg': 1e-5, #regularization parameter, default 0.1
         'rSpot': 5,   # negative binomial spread, default 2
         'spacing_factor': 6, # regulates how close the pointclouds are to each other. If 2 then they are 2xCellRadius apart.
-        'nNeighbors': 6,
+        'nNeighbors': 2,
         'rng': rng,
     }
 
     # pass here some cell and the corresponding class
-    my_cells = pd.read_csv(os.path.join('data', 'cells', 'zeisel', 'cells.csv'))
-    my_cells = my_cells.set_index("label")["class"].to_dict()
-    # my_cells = {
-    #     1: 'TEGLU24',
-    #     2: 'TEGLU24',
-    #     3: 'TEGLU24',
-    #     # 4: 'TEGLU21'
-    # }
+    # my_cells = pd.read_csv(os.path.join('data', 'cells', 'zeisel', 'cells.csv'))
+    # my_cells = my_cells.set_index("label")["class"].to_dict()
+    my_cells = {
+        1: 'TEGLU24',
+        2: 'TEGLU24',
+        3: 'TEGLU24',
+        # 4: 'TEGLU21'
+    }
 
     app(my_cells, config)
