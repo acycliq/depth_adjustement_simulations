@@ -277,7 +277,8 @@ class VarBayes:
                 self.spots_to_cell()
 
                 # 6. update gene efficiency
-                self.eta_upd()
+                print('etas are removed!! Do not forget to add them back in the future.')
+                # self.eta_upd()
 
                 # 7. update the dirichlet distribution
                 if self.single_cell.isMissing or (self.config['cell_type_prior'] == 'weighted'):
@@ -389,8 +390,11 @@ class VarBayes:
 
         rho = cfg['rSpot'] + cells.geneCount
 
-        self.spots._log_gamma_bar = delayed(self.spots.logGammaExpectation(rho, beta))
-        self.spots._gamma_bar = delayed(self.spots.gammaExpectation(rho, beta))
+        # self.spots._log_gamma_bar = delayed(self.spots.logGammaExpectation(rho, beta))
+        # self.spots._gamma_bar = delayed(self.spots.gammaExpectation(rho, beta))
+        print("Gammas are removed!! Do not forget to add them back in the future.")
+        self.spots._log_gamma_bar = delayed(np.zeros([self.nC, self.nG, self.nK], np.float32))
+        self.spots._gamma_bar = delayed(np.ones([self.nC, self.nG, self.nK], np.float32))
 
     # -------------------------------------------------------------------- #
     def cell_to_cellType(self) -> None:
