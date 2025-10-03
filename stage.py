@@ -48,7 +48,7 @@ def launch_napari(pc, label_image_3d):
 
     # Add points layer with matching colors (coords as Z, Y, X to match labels)
     viewer.add_points(pc[['z', 'y', 'x']].values,
-                      properties={'label': pc.label},
+                      properties={'label': pc.label, 'gene':pc.gene},
                       name="Point Cloud",
                       face_color=point_colors,
                       size=1.5)
