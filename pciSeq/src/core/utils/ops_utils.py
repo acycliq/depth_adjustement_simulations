@@ -587,8 +587,8 @@ def gene_density(spots, config, n_bins=3, eps=1e-4) -> pd.DataFrame:
     density = density + 0.00001
 
 
-    # print("REMOVE THIS - REMOVE THIS")
-    # density = pd.DataFrame(np.ones(density.shape)) # REMOVE THIS - REMOVE THIS
+    print("REMOVE THIS - REMOVE THIS")
+    density = pd.DataFrame(np.ones(density.shape)) # REMOVE THIS - REMOVE THIS
     return density  # num_planes x num_genes
 
 
