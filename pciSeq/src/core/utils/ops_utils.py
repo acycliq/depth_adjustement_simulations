@@ -569,7 +569,7 @@ def gene_density(spots, config, n_bins=3, eps=1e-4) -> pd.DataFrame:
 
     # assign each plane to a bin: 0 = bottom, 1 = middle, etc.
     data = data.assign(
-        bin_id = data.plane_id * n_bins // (n_planes+1)
+        bin_id = data.plane_id // (n_planes/n_bins + 0.5)
     )
 
     # Count spots per plane/gene_name and pivot
@@ -585,10 +585,18 @@ def gene_density(spots, config, n_bins=3, eps=1e-4) -> pd.DataFrame:
     })
     density = density.merge(df, how='left', on=['bin_id']).drop(columns=['bin_id', 'plane_id'])
     density = density + 0.00001
+    # density[density == 0] = 1
 
 
-    print("REMOVE THIS - REMOVE THIS")
-    density = pd.DataFrame(np.ones(density.shape)) # REMOVE THIS - REMOVE THIS
+    # Note to myself
+    # Something is off with the way I calc the density. When I have three cells: DGGRC1, TEGLU24, DGGRC1,
+    # one above the other, I dont scale up/down the gene counts, ie 'count_multipliers': [1.0, 1.0, 1.0] in my main.py
+    # and I set density = density + 0.00001 then I got some leakage DGGRC1 <-> TEGLU24, around 18%
+    # If I use density[density == 0] = 1 then leakege is gone, there is some DGGRC1 <-> DGGRC2 around 14% but we
+    # have leakage between these two under any conditions
+
+    # print("REMOVE THIS - REMOVE THIS")
+    # density = pd.DataFrame(np.ones(density.shape)) # REMOVE THIS - REMOVE THIS
     return density  # num_planes x num_genes
 
 
