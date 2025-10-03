@@ -24,6 +24,7 @@ def plot_confusion_matrix(cm, keys, opts_3D):
         y=sorted(keys),
         labels=dict(x="Predicted Class", y="Actual Class", color="Probability"),
         color_continuous_scale="Viridis",
+        range_color=[0, 1],
     )
     fig.update_traces(
         xgap=0.25,  # Gap between cells along the x-axis for grid lines
