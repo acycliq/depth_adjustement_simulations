@@ -131,7 +131,7 @@ if __name__ == '__main__':
         'n_samples': 100,  # Start with small test
         'use_replicates': False, # if true the counts and spatial coords are the same for cells with the same class
         'shuffle': True,  # if true then the order of the cells is shuffled
-        'scRNAseq_name': 'zeisel',
+        'scRNAseq_name': 'yao',
         'count_multipliers': [1.0], # will scale the counts of the top 5 genes for cell1, cell2, cell3 by this factor
         'mcr': 18,
         'inefficiency': 1.0,
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     }
 
     # pass here some cell and the corresponding class
-    my_cells = pd.read_csv(os.path.join('data', 'cells', 'zeisel', 'cells.csv'))
+    my_cells = pd.read_csv(os.path.join('data', 'cells', 'yao', 'cells.csv'))
     my_cells = my_cells.set_index("label")["class"].to_dict()
     # my_cells = {
     #     1: 'TEGLU24',
